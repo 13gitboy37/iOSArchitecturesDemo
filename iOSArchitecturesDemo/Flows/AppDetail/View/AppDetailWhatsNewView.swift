@@ -44,7 +44,7 @@ class AppDetailWhatsNewView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .black
         label.font = UIFont.systemFont(ofSize: 15)
-        label.numberOfLines = 3
+        label.numberOfLines = 8
         return label
     }()
     

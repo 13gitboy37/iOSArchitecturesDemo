@@ -12,7 +12,7 @@ final class SearchMusicViewController: UIViewController {
     
     // MARK: - Properties
     
-    var searchResults = [ITunesSong]() {
+    var searchResults = [SearchMusicCellModel]() {
         didSet {
             self.searchView.tableView.isHidden = false
             self.searchView.tableView.reloadData()
@@ -31,7 +31,7 @@ final class SearchMusicViewController: UIViewController {
         static let reuseIdentifier = "reuseId"
     }
     
-    private let presenter: SearchMusicViewOutput
+    private let viewModel: SearchMusicViewModel
     
     private let searchBar = UISearchBar()
     private let tableView = UITableView()
@@ -40,8 +40,8 @@ final class SearchMusicViewController: UIViewController {
     
     // MARK: - Construction
     
-    init(presenter: SearchMusicViewOutput) {
-        self.presenter = presenter
+    init(viewModel: SearchMusicViewModel) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -63,13 +63,38 @@ final class SearchMusicViewController: UIViewController {
         self.searchView.tableView.register(MusicCell.self, forCellReuseIdentifier: Constants.reuseIdentifier)
         self.searchView.tableView.delegate = self
         self.searchView.tableView.dataSource = self
+        
+        self.bindViewModel()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         self.throbber(show: false)
     }
+    
+    private func bindViewModel() {
+        self.viewModel.isPlaying.addObserver(self) { [weak self] (isPlaying, _) in
+            self?.throbber(show: isPlaying)
+        }
+        
+        self.viewModel.error.addObserver(self) { [weak self] (error, _) in
+            if let error = error {
+                self?.showError(error: error)
+            }
+        }
+        
+        self.viewModel.showEmptyResults.addObserver(self) { [weak self]
+            (showEmptuResults, _) in
+            self?.emptyResultView.isHidden = !showEmptuResults
+            self?.tableView.isHidden = showEmptuResults
+        }
+        
+        self.viewModel.musicCellModels.addObserver(self) { [weak self] (searchResults, _) in
+            self?.searchResults = searchResults
+        }
+    }
 }
+
 
 //MARK: - UITableViewDataSource
 extension SearchMusicViewController: UITableViewDataSource {
@@ -86,10 +111,30 @@ extension SearchMusicViewController: UITableViewDataSource {
         }
         
         let song = self.searchResults[indexPath.row]
-        let cellModel = MusicCellModelFactory.cellModel(from: song)
-        cell.configure(with: cellModel)
+//        let cellModel = MusicCellModelFactory.cellModel(from: song)
+        
+        congigure(cell: cell, with: song)
         
         return cell
+    }
+    
+    func congigure(cell: MusicCell, with song: SearchMusicCellModel) {
+        cell.titleLabel.text = song.trackName
+        cell.subtitleLabel.text = song.artistName
+        cell.ratingLabel.text = song.collectionName
+        
+        switch song.playingState {
+        case .notStarted:
+            break
+        case .inProgress(Progress: let progress):
+            let progressToShow = round(progress * 60.0) / 60.0
+            cell.ratingLabel.text = "\(progressToShow)"
+        case .isPlayed:
+            cell.ratingLabel.text = "Проигрование закончено"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
+                cell.ratingLabel.text = song.collectionName
+            })
+        }
     }
 }
 
@@ -98,7 +143,8 @@ extension SearchMusicViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let song = searchResults[indexPath.row]
-        presenter.viewDidSearch(with: "\(song)")
+//        view.viewDidSearch(with: "\(song)")
+        viewModel.didTapPlaySong(song)
     }
 }
 
@@ -115,7 +161,8 @@ extension SearchMusicViewController: UISearchBarDelegate {
             return
         }
         
-        self.presenter.viewDidSearch(with: query)
+//        self.presenter.viewDidSearch(with: query)
+        viewModel.search(for: query)
     }
 }
 
@@ -141,4 +188,11 @@ extension SearchMusicViewController: SearchMusicViewInput {
     func throbber(show: Bool) {
         UIApplication.shared.isNetworkActivityIndicatorVisible = show
     }
+}
+
+protocol SearchMusicViewInput: AnyObject {
+    var searchResults: [SearchMusicCellModel] { get set }
+    func showError(error: Error)
+    func showNoResults()
+    func hideNoResults()
 }

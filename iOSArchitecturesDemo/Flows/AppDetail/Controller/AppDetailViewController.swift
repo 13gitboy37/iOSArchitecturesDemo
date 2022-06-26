@@ -14,6 +14,23 @@ final class AppDetailViewController: UIViewController {
     
     public var app: ITunesApp
     
+    lazy var contentViewSize = CGSize(width: self.view.frame.width, height: self.view.frame.height + 100)
+    
+    lazy var scrollView: UIScrollView = {
+        let view = UIScrollView(frame: .zero)
+        view.backgroundColor = .white
+        view.frame = self.view.bounds
+        view.contentSize = contentViewSize
+        return view
+    }()
+    
+    lazy var contentView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.frame.size = contentViewSize
+        return view
+    }()
+    
     lazy var headerViewController = AppDetailHeaderViewController(app: self.app)
     
     lazy var whatsNewViewController = AppDetailWhatsNewViewController(app: self.app)
@@ -44,48 +61,27 @@ final class AppDetailViewController: UIViewController {
         view.backgroundColor = .white
         navigationController?.navigationBar.tintColor = UIColor.white
         navigationItem.largeTitleDisplayMode = .never
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
         addHeaderViewController()
-        addDescriptionViewController()
         addWhatsNewViewController()
         addScreenshotsViewController()
     }
     
     private func addHeaderViewController() {
-        addChild(headerViewController)
-        view.addSubview(headerViewController.view)
-        headerViewController.didMove(toParent: self)
+        contentView.addSubview(headerViewController.view)
         
         headerViewController.view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            self.headerViewController.view.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor),
-            self.headerViewController.view.leftAnchor.constraint(equalTo: self.view.leftAnchor),
-            self.headerViewController.view.rightAnchor.constraint(equalTo: self.view.rightAnchor)
+            self.headerViewController.view.topAnchor.constraint(equalTo: self.contentView.topAnchor),
+            self.headerViewController.view.leftAnchor.constraint(equalTo: self.contentView.leftAnchor),
+            self.headerViewController.view.rightAnchor.constraint(equalTo: self.contentView.rightAnchor)
 
         ])
     }
     
-    private func addDescriptionViewController() {
-        
-        // TODO: ДЗ, сделать другие сабмодули
-        
-        let descriptionViewController = UIViewController()
-        addChild(descriptionViewController)
-        view.addSubview(descriptionViewController.view)
-        descriptionViewController.didMove(toParent: self)
-        
-        descriptionViewController.view.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            descriptionViewController.view.topAnchor.constraint(equalTo: self.headerViewController.view.bottomAnchor),
-            descriptionViewController.view.leftAnchor.constraint(equalTo: self.view.leftAnchor),
-            descriptionViewController.view.rightAnchor.constraint(equalTo: self.view.rightAnchor),
-            descriptionViewController.view.heightAnchor.constraint(equalToConstant: 250.0)
-        ])
-    }
-    
     private func addWhatsNewViewController() {
-        addChild(whatsNewViewController)
-        view.addSubview(whatsNewViewController.view)
-        whatsNewViewController.didMove(toParent: self)
+        contentView.addSubview(whatsNewViewController.view)
         
         whatsNewViewController.view.translatesAutoresizingMaskIntoConstraints = false
         
@@ -98,16 +94,14 @@ final class AppDetailViewController: UIViewController {
     }
     
     private func addScreenshotsViewController() {
-           addChild(screenshotsViewController)
-           view.addSubview(screenshotsViewController.view)
-           screenshotsViewController.didMove(toParent: self)
-           
+            contentView.addSubview(screenshotsViewController.view)
            screenshotsViewController.view.translatesAutoresizingMaskIntoConstraints = false
            NSLayoutConstraint.activate([
                screenshotsViewController.view.topAnchor.constraint(equalTo: self.whatsNewViewController.view.bottomAnchor, constant: 0),
-               screenshotsViewController.view.leftAnchor.constraint(equalTo: self.view.leftAnchor),
-               screenshotsViewController.view.rightAnchor.constraint(equalTo: self.view.rightAnchor),
-               screenshotsViewController.view.heightAnchor.constraint(equalToConstant: self.view.frame.width)
+               screenshotsViewController.view.leftAnchor.constraint(equalTo: self.contentView.leftAnchor),
+               screenshotsViewController.view.rightAnchor.constraint(equalTo: self.contentView.rightAnchor),
+               screenshotsViewController.view.heightAnchor.constraint(equalToConstant: self.contentView.frame.width)
            ])
        }
 }
+
