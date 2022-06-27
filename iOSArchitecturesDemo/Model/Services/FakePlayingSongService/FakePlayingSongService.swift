@@ -17,7 +17,7 @@ protocol PlaySongServiceInterface: class {
 final class PlayingSong {
     enum PlayState {
         case notStarted
-        case inProgress(Progress: Double)
+        case inProgress(Progress: Int)
         case isPlayed
     }
     
@@ -51,14 +51,14 @@ final class FakePlayingSongService: PlaySongServiceInterface {
             [weak self] timer in
             switch playingSong.playingState {
             case .notStarted:
-                playingSong.playingState = .inProgress(Progress: 0.1)
+                playingSong.playingState = .inProgress(Progress: 1)
             case .inProgress(let progress):
-                let newProgress = progress + 0.1
-                if newProgress >= 1 {
+                let newProgress = progress + 1
+                if newProgress >= 10 {
                     playingSong.playingState = .isPlayed
                     self?.invalidateTimer(timer)
                 } else {
-                    playingSong.playingState = .inProgress(Progress: progress + 0.1)
+                    playingSong.playingState = .inProgress(Progress: progress + 1)
                 }
             case .isPlayed:
                 self?.invalidateTimer(timer)
